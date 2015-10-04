@@ -6,6 +6,7 @@ import com.test.readbox.FileInfo;
 
 public class FileInfoComparator implements Comparator<FileInfo> {
 
+	@Override
 	public int compare(FileInfo f1, FileInfo f2) {
 		if (f1.getLastModified() == null) {
 			if (f2.getLastModified() == null) {
@@ -16,7 +17,7 @@ public class FileInfoComparator implements Comparator<FileInfo> {
 		}
 		if (f2.getLastModified() == null) {
 			return -1;
-		}	
+		}
 		return -f1.getLastModified().compareTo(f2.getLastModified());
 	}
 }

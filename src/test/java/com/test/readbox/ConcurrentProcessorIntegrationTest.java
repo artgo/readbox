@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Random;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.testng.Reporter;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -30,9 +31,9 @@ public class ConcurrentProcessorIntegrationTest {
 	private static final String BOX_ACCESS_TOKEN = "BOX_ACCESS_TOKEN";
 	private static final String BOX_CLIENT_SECRET = "BOX_CLIENT_SECRET";
 	private static final String BOX_CLIENT_ID = "BOX_CLIENT_ID";
-	
+
 	private BoxAPIConnection api;
-	
+
 	@BeforeClass(alwaysRun = true)
 	public void setup() {
 		String clientId = System.getenv(BOX_CLIENT_ID);
@@ -40,43 +41,60 @@ public class ConcurrentProcessorIntegrationTest {
 		String accessToken = System.getenv(BOX_ACCESS_TOKEN);
 		String refreshToken = System.getenv(BOX_REFRESH_TOKEN);
 		api = new BoxAPIConnection(clientId, clientSecret, accessToken, refreshToken);
+		api.setLastRefresh(System.currentTimeMillis());
+		api.setExpires(3_600_000);
+		//api.setExpires(100);
 		Reporter.log("API init complete", true);
 	}
-	
+
 	@AfterClass(alwaysRun = true)
 	public void after() {
 		Reporter.log("access: " + api.getAccessToken(), true);
 		Reporter.log("refresh: " + api.getRefreshToken(), true);
 	}
-	
+
 	public void test_picks_150_first_from_subdir() throws Exception {
-		Stopwatch stopwatch = Stopwatch.createStarted();	
+		Stopwatch stopwatch = Stopwatch.createStarted();
 		Reporter.log("Start 150 test", true);
 		//upload_300_files_to_a_folder();
-		upload_6000_files_to_35_folders();
-		ConcurrentProcessor processor = getProcessor();
-		Collection<FileInfo> results = processor.getResults();
-		assertThat(results).isNotEmpty();
-		assertThat(results).hasSize(150);
-		int cur = 1;
-		for (FileInfo fileInfo : results) {
-			assertThat(fileInfo.getName()).isEqualTo("f" + (TOTAL_FILES - cur++));
+		//upload_6000_files_to_35_folders();
+		try {
+			ConcurrentProcessor processor = getProcessor();
+			Collection<FileInfo> results = processor.getResults();
+			assertThat(results).isNotEmpty();
+			assertThat(results).hasSize(150);
+			FileInfo prev = null;
+			for (FileInfo fileInfo : results) {
+				if (prev != null) {
+					int prevIndex = indexFormName(prev.getName());
+					int curIndex = indexFormName(fileInfo.getName());
+					assertThat(curIndex).isLessThan(prevIndex);
+				}
+				prev = fileInfo;
+			}
+		} finally {
+			stopwatch.stop();
+			Reporter.log("Test complete in " + stopwatch, true);
 		}
-		stopwatch.stop();
-		Reporter.log("Test complete in " + stopwatch, true);
+	}
+
+	private int indexFormName(String name) {
+		return Integer.parseInt(StringUtils.substring(name, 1));
 	}
 
 	public void test_picks_150_first_from_subdir_100_times() throws Exception {
 		long total = 0;
-		ConcurrentProcessor processor = getProcessor();
+		//ConcurrentProcessor processor = getProcessor();
 		for (int i = 0; i < 100; i++) {
 			long init = System.currentTimeMillis();
 			//processor.getResults();
-			total += System.currentTimeMillis() - init;
+			long diff = System.currentTimeMillis() - init;
+			total += diff;
+			//Reporter.log("Test took " + diff + " ms", true);
 		}
 		Reporter.log("Average: " + (total / 100.0), true);
 	}
-	
+
 	protected void upload_300_files_to_a_folder() throws Exception {
 		BoxFolder root = BoxFolder.getRootFolder(api);
 		Reporter.log("Cleaninig...", true);
@@ -94,15 +112,15 @@ public class ConcurrentProcessorIntegrationTest {
 		}
 		Reporter.log("Upload complete", true);
 	}
-	
+
 	protected void upload_6000_files_to_35_folders() throws Exception {
 		BoxFolder root = BoxFolder.getRootFolder(api);
 		Reporter.log("Cleaninig...", true);
 		cleanup(api, root);
 		Thread.sleep(INTERFILE_DELAY);
-		
+
 		Reporter.log("Cleanup complete. Creating folders...", true);
-		
+
 		ArrayList<BoxFolder> folders = new ArrayList<>();
 		folders.add(root);
 		createFolder(root, "fl1", folders);
@@ -112,16 +130,16 @@ public class ConcurrentProcessorIntegrationTest {
 		BoxFolder fl5 = createFolder(root, "fl5", folders);
 		BoxFolder fl6 = createFolder(root, "fl6", folders);
 		BoxFolder fl7 = createFolder(root, "fl7", folders);
-		
+
 		createFolder(fl2, "fl21", folders);
-		
+
 		createFolder(fl3, "fl31", folders);
 		createFolder(fl3, "fl32", folders);
-		
+
 		BoxFolder fl41 = createFolder(fl4, "fl41", folders);
 		BoxFolder fl411 = createFolder(fl41, "fl411", folders);
 		createFolder(fl411, "fl4111", folders);
-		
+
 		createFolder(fl5, "fl51", folders);
 		BoxFolder fl52 = createFolder(fl5, "fl52", folders);
 		createFolder(fl52, "fl521", folders);
@@ -145,9 +163,9 @@ public class ConcurrentProcessorIntegrationTest {
 		BoxFolder fl711111 = createFolder(fl71111, "fl711111", folders);
 		BoxFolder fl7111111 = createFolder(fl711111, "fl7111111", folders);
 		createFolder(fl7111111, "fl71111111", folders);
-		
+
 		Reporter.log("" + folders.size() + " folder created. Uploading " + TOTAL_FILES_BIG + " files", true);
-		
+
 		Random random = new Random();
 		for (int i = 0; i < TOTAL_FILES_BIG; i++) {
 			InputStream is = IOUtils.toInputStream("text" + i);
@@ -161,7 +179,7 @@ public class ConcurrentProcessorIntegrationTest {
 				Reporter.log("f" + i + " upload failed", true);
 			}
 		}
-		
+
 		Reporter.log("Upload complete.", true);
 	}
 

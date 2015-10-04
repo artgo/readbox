@@ -17,29 +17,31 @@ public class App {
 
 	public static void main(String[] args) throws InterruptedException {
 		System.out.println("Starting...");
-		
-		Stopwatch stopwatch = Stopwatch.createStarted();	
-		
+
+		Stopwatch stopwatch = Stopwatch.createStarted();
+
 		String clientId = getEnv(BOX_CLIENT_ID);
 		String clientSecret = getEnv(BOX_CLIENT_SECRET);
 		String accessToken = getEnv(BOX_ACCESS_TOKEN);
 		String refreshToken = getEnv(BOX_REFRESH_TOKEN);
 		BoxAPIConnection api = new BoxAPIConnection(clientId, clientSecret, accessToken, refreshToken);
+		api.setLastRefresh(System.currentTimeMillis());
+		api.setExpires(3_600_000);
 
 		Injector injector = Guice.createInjector(new BoxModule(api));
 		ConcurrentProcessor processor = injector.getInstance(ConcurrentProcessor.class);
-		
+
 		Collection<FileInfo> results = processor.getResults();
-		
+
 		stopwatch.stop();
-		
+
 		System.out.println("Elapsed: " + stopwatch);
 		results.stream().forEach(System.out::println);
-		
+
 		System.out.println("access: " + api.getAccessToken());
 		System.out.println("refresh: " + api.getRefreshToken());
 	}
-	
+
 	private static String getEnv(String envName) {
 		String result = System.getenv(envName);
 		if (StringUtils.isBlank(result)) {

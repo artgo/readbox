@@ -17,8 +17,8 @@ public class BoxModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		//bind(Executor.class).toInstance(Runnable::run);
-		bind(Executor.class).toInstance(Executors.newFixedThreadPool(8));
+		bind(Executor.class).toInstance(Executors.newFixedThreadPool(7));
 		bind(BoxAPIConnection.class).toInstance(api);
-		bind(BoxFetcher.class).to(BoxFetcherConcurrentSdkBased.class).asEagerSingleton();		
+		bind(BoxFetcher.class).to(BoxFetcherConcurrentSdkBased.class).asEagerSingleton();
 	}
 }

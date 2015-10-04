@@ -11,9 +11,9 @@ import com.test.readbox.FileInfo;
 @Singleton
 public class ResultsAccumulator {
 	private static final int FILES_TO_RETAIN = 150;
-	
+
 	private final ConcurrentSkipListSet<FileInfo> results = new ConcurrentSkipListSet<>(new FileInfoComparator());
-	
+
 	public void addAll(Collection<FileInfo> files) {
 		if (hasDateLimit()) {
 			filteredAdd(files);
@@ -22,7 +22,7 @@ public class ResultsAccumulator {
 		}
 		refreshDateLimit();
 	}
-	
+
 	private void filteredAdd(Collection<FileInfo> files) {
 		Date limit = getDateLimit();
 		results.addAll(files.stream().filter(f -> limit.before(f.getLastModified())).collect(Collectors.toList()));
@@ -36,7 +36,7 @@ public class ResultsAccumulator {
 					results.removeAll(results.tailSet(fileInfo, false));
 					break;
 				}
-			}		
+			}
 		}
 	}
 
@@ -44,11 +44,11 @@ public class ResultsAccumulator {
 		refreshDateLimit();
 		return results;
 	}
-	
+
 	public boolean hasDateLimit() {
 		return results.size() >= FILES_TO_RETAIN;
 	}
-	
+
 	public Date getDateLimit() {
 		return results.last().getLastModified();
 	}

@@ -17,7 +17,7 @@ public class ConcurrentReader {
 	private final BoxFetcher fetcher;
 	private final CounterService counterService;
 	private final Executor executor;
-	
+
 	@Inject
 	public ConcurrentReader(ResultsAccumulator resultsAccumulator, BoxFetcher fetcher, Executor executor, CounterService counterService) {
 		this.resultsAccumulator = resultsAccumulator;
@@ -28,14 +28,25 @@ public class ConcurrentReader {
 
 	public void read(String folderId) {
 		try {
-			FoldersAndFiles foldersAndFiles = fetcher.fetch(folderId);
-			for (FileInfo nestedFolder : foldersAndFiles.getFolders()) {
-				counterService.inc();
-				executor.execute(() -> read(nestedFolder.getId()));
+			try {
+				FoldersAndFiles foldersAndFiles = fetcher.fetch(folderId);
+
+				int lastN = foldersAndFiles.getFolders().size();
+				int current = 1;
+				for (FileInfo nestedFolder : foldersAndFiles.getFolders()) {
+					counterService.inc();
+					if (current++ < lastN) {
+						executor.execute(() -> read(nestedFolder.getId()));
+					} else {
+						// Reuse same thread
+						read(nestedFolder.getId());
+					}
+				}
+
+				resultsAccumulator.addAll(foldersAndFiles.getFiles());
+			} catch (InterruptedException e) {
+				log.error("Failed to read data", e);
 			}
-			resultsAccumulator.addAll(foldersAndFiles.getFiles());
-		} catch (InterruptedException e) {
-			log.error("Failed to read data", e);
 		} finally {
 			counterService.dec();
 		}

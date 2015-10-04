@@ -4,7 +4,7 @@ import java.util.Date;
 
 /**
  * Immutable file info
- * 
+ *
  * id: “file-id”, parentId: “parent-folder-id”, name: “file-name”, lastModified: “last-modified-date”
  *
  */

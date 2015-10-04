@@ -14,7 +14,7 @@ import com.test.readbox.FileInfo;
 @Test
 public class FileInfoComparatorTest {
 	private FileInfoComparator comparator;
-	
+
 	@BeforeClass(alwaysRun = true)
 	public void setup() {
 		comparator = new FileInfoComparator();
