@@ -1,6 +1,8 @@
 package com.test.readbox;
 
 import java.util.Collection;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -40,6 +42,12 @@ public class App {
 
 		System.out.println("access: " + api.getAccessToken());
 		System.out.println("refresh: " + api.getRefreshToken());
+
+		Executor executor = injector.getInstance(Executor.class);
+		if (executor instanceof ExecutorService) {
+			ExecutorService execService = (ExecutorService) executor;
+			execService.shutdown();
+		}
 	}
 
 	private static String getEnv(String envName) {
