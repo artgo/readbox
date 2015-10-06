@@ -1,5 +1,9 @@
 package com.test.readbox.box;
 
+import static com.test.readbox.box.BoxConstants.ID_FIELD;
+import static com.test.readbox.box.BoxConstants.CONTENT_MODIFIED_AT_FIELD;
+import static com.test.readbox.box.BoxConstants.NAME_FIELD;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,9 +21,9 @@ public class BoxPageFetcherBoxSdkImpl implements BoxPageFetcher {
 	}
 
 	@Override
-	public BoxPage getPage(BoxCredentials credentials, String folderId, long offset, int limit, String... fields) {
+	public BoxPage getPage(BoxCredentials credentials, String folderId, long offset, int limit) {
 		BoxFolder remoteFolder = new BoxFolder(credentials.getBoxApiConnection(), folderId);
-		PartialCollection<BoxItem.Info> items = remoteFolder.getChildrenRange(offset, limit, fields);
+		PartialCollection<BoxItem.Info> items = remoteFolder.getChildrenRange(offset, limit, ID_FIELD, NAME_FIELD, CONTENT_MODIFIED_AT_FIELD);
 
 		BoxPage page = new BoxPage(items.fullSize());
 		for (BoxItem.Info itemInfo : items) {
@@ -29,10 +33,13 @@ public class BoxPageFetcherBoxSdkImpl implements BoxPageFetcher {
 		    } else {
 		    	page.getFiles().add(fi);
 		    }
-		    log.info("Loaded {}", itemInfo.getName());
+		    //log.info("Loaded {}", itemInfo.getName());
 		}
 
 		return page;
 	}
 
+	@Override
+	public void shutdown() {
+	}
 }

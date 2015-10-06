@@ -41,7 +41,7 @@ public class ConcurrentReader {
 				int lastN = folders.size();
 				int current = 1;
 				for (FileInfo nestedFolder : folders) {
-				    log.info("Processing folder {}", nestedFolder.getName());
+				    //log.info("Processing folder {}", nestedFolder.getName());
 					data.getThreadsCounter().inc();
 					if (current++ < lastN) {
 						executor.execute(() -> read(nestedFolder.getId(), data));

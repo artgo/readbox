@@ -83,13 +83,13 @@ public class ConcurrentProcessorIntegrationTest {
 
 	public void test_picks_150_first_from_subdir_100_times() throws Exception {
 		long total = 0;
-		//ConcurrentProcessor processor = getProcessor();
+		ConcurrentProcessor processor = getProcessor();
 		for (int i = 0; i < 100; i++) {
 			long init = System.currentTimeMillis();
-			//processor.getResults();
+			processor.getResults(credentials);
 			long diff = System.currentTimeMillis() - init;
 			total += diff;
-			//Reporter.log("Test took " + diff + " ms", true);
+			Reporter.log("Test took " + diff + " ms", true);
 		}
 		Reporter.log("Average: " + (total / 100.0), true);
 	}

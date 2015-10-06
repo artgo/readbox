@@ -17,9 +17,6 @@ import com.test.readbox.internal.data.FoldersAndFiles;
 public class ConcurrentContentFetcher {
 	private static final Logger log = LogManager.getLogger(ConcurrentContentFetcher.class);
 
-	private static final String ID_FIELD = "id";
-	private static final String NAME_FIELD = "name";
-	private static final String MODIFIED_AT_FIELD = "content_modified_at";
 	private static final int BATCH_SIZE = 1000; // This is the maximum possible batch size.
 	private static final int CONCURRENT_THRESHHOLD = 5; // Do not use threads if there not enough data.
 
@@ -35,7 +32,7 @@ public class ConcurrentContentFetcher {
 	public FoldersAndFiles fetch(BoxCredentials credentials, String folderId) throws InterruptedException {
 		FoldersAndFiles foldersAndFiles = new FoldersAndFiles();
 
-		BoxPage page = boxPageFetcher.getPage(credentials, folderId, 0, BATCH_SIZE, ID_FIELD, NAME_FIELD, MODIFIED_AT_FIELD);
+		BoxPage page = boxPageFetcher.getPage(credentials, folderId, 0, BATCH_SIZE);
 
 		CountDownLatch latch = null;
 
@@ -82,7 +79,7 @@ public class ConcurrentContentFetcher {
 
 	private void loadAndProcess(BoxCredentials credentials, CountDownLatch latch, String folderId, FoldersAndFiles foldersAndFiles, int batchN) {
 		try {
-			BoxPage page = boxPageFetcher.getPage(credentials, folderId, batchN * BATCH_SIZE, BATCH_SIZE, ID_FIELD, NAME_FIELD, MODIFIED_AT_FIELD);
+			BoxPage page = boxPageFetcher.getPage(credentials, folderId, batchN * BATCH_SIZE, BATCH_SIZE);
 			foldersAndFiles.addPage(page);
 		} finally {
 			if (latch != null) {
