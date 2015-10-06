@@ -1,12 +1,9 @@
-package com.test.readbox;
+package com.test.readbox.internal.data;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.google.inject.Singleton;
-
-@Singleton
-public class CounterService {
+public class ThreadsCounter {
 	private final AtomicLong counter = new AtomicLong(0L);
 	private final CountDownLatch latch = new CountDownLatch(1);
 

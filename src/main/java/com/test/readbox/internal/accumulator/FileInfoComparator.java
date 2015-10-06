@@ -1,8 +1,8 @@
-package com.test.readbox.accumulator;
+package com.test.readbox.internal.accumulator;
 
 import java.util.Comparator;
 
-import com.test.readbox.FileInfo;
+import com.test.readbox.internal.data.FileInfo;
 
 public class FileInfoComparator implements Comparator<FileInfo> {
 

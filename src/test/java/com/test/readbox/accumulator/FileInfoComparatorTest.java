@@ -9,7 +9,8 @@ import org.joda.time.DateTime;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.test.readbox.FileInfo;
+import com.test.readbox.internal.accumulator.FileInfoComparator;
+import com.test.readbox.internal.data.FileInfo;
 
 @Test
 public class FileInfoComparatorTest {

@@ -1,21 +1,21 @@
 package com.test.readbox;
 
 import java.util.Collection;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.box.sdk.BoxAPIConnection;
 import com.google.common.base.Stopwatch;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.test.readbox.internal.BoxModule;
+import com.test.readbox.internal.data.FileInfo;
 
 public class App {
 	private static final String BOX_REFRESH_TOKEN = "BOX_REFRESH_TOKEN";
 	private static final String BOX_ACCESS_TOKEN = "BOX_ACCESS_TOKEN";
 	private static final String BOX_CLIENT_SECRET = "BOX_CLIENT_SECRET";
 	private static final String BOX_CLIENT_ID = "BOX_CLIENT_ID";
+	static final long SIXTY_DAYS = 5184000000L;
 
 	public static void main(String[] args) throws InterruptedException {
 		System.out.println("Starting...");
@@ -26,28 +26,23 @@ public class App {
 		String clientSecret = getEnv(BOX_CLIENT_SECRET);
 		String accessToken = getEnv(BOX_ACCESS_TOKEN);
 		String refreshToken = getEnv(BOX_REFRESH_TOKEN);
-		BoxAPIConnection api = new BoxAPIConnection(clientId, clientSecret, accessToken, refreshToken);
-		api.setLastRefresh(System.currentTimeMillis());
-		api.setExpires(3_600_000);
+		BoxCredentials credentials = new BoxCredentials(clientId, clientSecret, accessToken, refreshToken, System.currentTimeMillis(), SIXTY_DAYS);
 
-		Injector injector = Guice.createInjector(new BoxModule(api));
+		BoxModule module = new BoxModule();
+		Injector injector = Guice.createInjector(module);
 		ConcurrentProcessor processor = injector.getInstance(ConcurrentProcessor.class);
 
-		Collection<FileInfo> results = processor.getResults();
+		Collection<FileInfo> results = processor.getResults(credentials);
 
 		stopwatch.stop();
 
 		System.out.println("Elapsed: " + stopwatch);
 		results.stream().forEach(System.out::println);
 
-		System.out.println("access: " + api.getAccessToken());
-		System.out.println("refresh: " + api.getRefreshToken());
+		System.out.println("access: " + credentials.getAccessToken());
+		System.out.println("refresh: " + credentials.getRefreshToken());
 
-		Executor executor = injector.getInstance(Executor.class);
-		if (executor instanceof ExecutorService) {
-			ExecutorService execService = (ExecutorService) executor;
-			execService.shutdown();
-		}
+		module.shutdown(injector);
 	}
 
 	private static String getEnv(String envName) {

@@ -21,6 +21,8 @@ import com.box.sdk.BoxItem;
 import com.google.common.base.Stopwatch;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.test.readbox.internal.BoxModule;
+import com.test.readbox.internal.data.FileInfo;
 
 @Test(singleThreaded = true)
 public class ConcurrentProcessorIntegrationTest {
@@ -32,7 +34,7 @@ public class ConcurrentProcessorIntegrationTest {
 	private static final String BOX_CLIENT_SECRET = "BOX_CLIENT_SECRET";
 	private static final String BOX_CLIENT_ID = "BOX_CLIENT_ID";
 
-	private BoxAPIConnection api;
+	private BoxCredentials credentials;
 
 	@BeforeClass(alwaysRun = true)
 	public void setup() {
@@ -40,17 +42,14 @@ public class ConcurrentProcessorIntegrationTest {
 		String clientSecret = System.getenv(BOX_CLIENT_SECRET);
 		String accessToken = System.getenv(BOX_ACCESS_TOKEN);
 		String refreshToken = System.getenv(BOX_REFRESH_TOKEN);
-		api = new BoxAPIConnection(clientId, clientSecret, accessToken, refreshToken);
-		api.setLastRefresh(System.currentTimeMillis());
-		api.setExpires(3_600_000);
-		//api.setExpires(100);
+		credentials = new BoxCredentials(clientId, clientSecret, accessToken, refreshToken, System.currentTimeMillis(), App.SIXTY_DAYS);
 		Reporter.log("API init complete", true);
 	}
 
 	@AfterClass(alwaysRun = true)
 	public void after() {
-		Reporter.log("access: " + api.getAccessToken(), true);
-		Reporter.log("refresh: " + api.getRefreshToken(), true);
+		Reporter.log("access: " + credentials.getAccessToken(), true);
+		Reporter.log("refresh: " + credentials.getRefreshToken(), true);
 	}
 
 	public void test_picks_150_first_from_subdir() throws Exception {
@@ -60,7 +59,7 @@ public class ConcurrentProcessorIntegrationTest {
 		//upload_6000_files_to_35_folders();
 		try {
 			ConcurrentProcessor processor = getProcessor();
-			Collection<FileInfo> results = processor.getResults();
+			Collection<FileInfo> results = processor.getResults(credentials);
 			assertThat(results).isNotEmpty();
 			assertThat(results).hasSize(150);
 			FileInfo prev = null;
@@ -96,6 +95,7 @@ public class ConcurrentProcessorIntegrationTest {
 	}
 
 	protected void upload_300_files_to_a_folder() throws Exception {
+		BoxAPIConnection api = credentials.getBoxApiConnection();
 		BoxFolder root = BoxFolder.getRootFolder(api);
 		Reporter.log("Cleaninig...", true);
 		cleanup(api, root);
@@ -114,6 +114,7 @@ public class ConcurrentProcessorIntegrationTest {
 	}
 
 	protected void upload_6000_files_to_35_folders() throws Exception {
+		BoxAPIConnection api = credentials.getBoxApiConnection();
 		BoxFolder root = BoxFolder.getRootFolder(api);
 		Reporter.log("Cleaninig...", true);
 		cleanup(api, root);
@@ -184,6 +185,7 @@ public class ConcurrentProcessorIntegrationTest {
 	}
 
 	private BoxFolder createFolder(BoxFolder parent, String name, ArrayList<BoxFolder> folders) {
+		BoxAPIConnection api = credentials.getBoxApiConnection();
 		try {
 			BoxFolder.Info folderInfo = parent.createFolder(name);
 			BoxFolder folder = new BoxFolder(api, folderInfo.getID());
@@ -209,7 +211,7 @@ public class ConcurrentProcessorIntegrationTest {
 	}
 
 	private ConcurrentProcessor getProcessor() {
-		Injector injector = Guice.createInjector(new BoxModule(api));
+		Injector injector = Guice.createInjector(new BoxModule());
 		ConcurrentProcessor processor = injector.getInstance(ConcurrentProcessor.class);
 		return processor;
 	}

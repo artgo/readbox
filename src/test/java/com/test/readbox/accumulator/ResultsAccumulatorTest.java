@@ -10,7 +10,8 @@ import java.util.List;
 
 import org.testng.annotations.Test;
 
-import com.test.readbox.FileInfo;
+import com.test.readbox.internal.accumulator.ResultsAccumulator;
+import com.test.readbox.internal.data.FileInfo;
 
 @Test
 public class ResultsAccumulatorTest {

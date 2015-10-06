@@ -4,28 +4,27 @@ import java.util.Collection;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.test.readbox.accumulator.ResultsAccumulator;
+import com.test.readbox.internal.ConcurrentReader;
+import com.test.readbox.internal.data.DataInternal;
+import com.test.readbox.internal.data.FileInfo;
 
 @Singleton
 public class ConcurrentProcessor {
 	private static final String ROOT_FOLDER_ID = "0";
 
-	private final ResultsAccumulator resultsAccumulator;
-	private final CounterService counterService;
 	private final ConcurrentReader reader;
 
 	@Inject
-	public ConcurrentProcessor(ResultsAccumulator resultsAccumulator, CounterService counterService, ConcurrentReader reader) {
-		this.resultsAccumulator = resultsAccumulator;
-		this.counterService = counterService;
+	public ConcurrentProcessor(ConcurrentReader reader) {
 		this.reader = reader;
 	}
 
-	public Collection<FileInfo> getResults() throws InterruptedException {
-		counterService.inc();
-		reader.read(ROOT_FOLDER_ID);
+	public Collection<FileInfo> getResults(BoxCredentials credentials) throws InterruptedException {
+		DataInternal data = new DataInternal(credentials);
+		data.getThreadsCounter().inc();
+		reader.read(ROOT_FOLDER_ID, data);
 		Thread.yield();
-		counterService.await();
-		return resultsAccumulator.getResults();
+		data.getThreadsCounter().await();
+		return data.getResultsAccumulator().getResults();
 	}
 }

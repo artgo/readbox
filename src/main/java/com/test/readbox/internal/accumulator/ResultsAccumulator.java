@@ -1,14 +1,12 @@
-package com.test.readbox.accumulator;
+package com.test.readbox.internal.accumulator;
 
 import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
-import com.google.inject.Singleton;
-import com.test.readbox.FileInfo;
+import com.test.readbox.internal.data.FileInfo;
 
-@Singleton
 public class ResultsAccumulator {
 	private static final int FILES_TO_RETAIN = 150;
 
